@@ -1,0 +1,14 @@
+{
+  "name": "zendesk_translator",
+  "version": "1.0.0",
+  "description": "Zendesk Translator via webhookand apigw",
+  "main": "index.js",
+  "author": "Daniel Wellington",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "is-english": "1.3.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.19.0"
+  }
+}

@@ -1,0 +1,237 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Zendesk Translator
+
+  Template for Zendesk Translator lambda
+
+
+Parameters:
+  Environment:
+    Type: String
+  DebugParam:
+    Type: String
+  ZendeskKeySSMParameterPath:
+    Type: String
+  ZendeskUsernameMail:
+    Type: String
+  ZendeskSubdomain:
+    Type: String
+  ZendeskTicketLangFieldId:
+    Type: String
+  KmsKeyId:
+    Type: String
+  EventBusName:
+    Type: String
+  BasicAuthUsernameSSMParameterPath:
+    Type: String
+  BasicAuthPasswordSSMParameterPath:
+    Type: String
+  EventBusName:
+    Type: String
+
+Resources:
+  EventBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: !Sub ${EventBusName}
+
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: api
+      EndpointConfiguration:
+        Type: REGIONAL
+      Auth:
+        Authorizers:
+          BasicAuthorizer:
+            FunctionPayloadType: REQUEST
+            FunctionArn: !GetAtt ApiGwBasicAuthAuthorizer.Arn
+            Identity:
+              Headers:
+                - Authorization
+        DefaultAuthorizer: BasicAuthorizer
+      MethodSettings:
+      DefinitionBody:
+        swagger: 2.0
+        info:
+          title: !Sub zendesk-trans-${Environment}
+        paths:
+          /zendesk-eb:
+            post:
+              #api key support
+              description: |
+                Post a message to eventbus
+              responses:
+                '200':
+                  description: 200 OK
+                  schema:
+                    $ref: "#/definitions/Empty"
+                    headers:
+                      Content-Type:
+                        type: "string"
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws
+                passthroughBehavior: never
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:events:path//
+                credentials: !GetAtt ApiRole.Arn
+                requestParameters:
+                  integration.request.header.X-Amz-Target: "'AWSEvents.PutEvents'"
+                  integration.request.header.Content-Type: "'application/x-amz-json-1.1'"
+                requestTemplates:
+                  application/json: !Sub |
+                    #set($input = $input.json('$'))
+                    {
+                      "Entries": [
+                        {
+                          "Source": "zendesk",
+                          "Detail": "$util.escapeJavaScript($input).replaceAll("\\'", "'")",
+                          "Resources": [],
+                          "DetailType": "Support Ticket: Comment Created",
+                          "EventBusName": "${EventBus.Name}"
+                        }
+                      ]
+                    }
+                responses:
+                  "default":
+                    statusCode: 200
+
+  ApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+      Policies:
+        - PolicyName: put-events
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - events:PutEvents
+                Effect: "Allow"
+                Resource: !GetAtt EventBus.Arn
+
+
+  ZendeskIamUser:
+    Type: AWS::IAM::User
+    Properties:
+      Path: "/"
+      Policies:
+        - PolicyName: zendesk-translate-basicauth
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "apigateway:POST"
+                Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*/POST/zendesk-eb
+
+
+  ApiGwBasicAuthAuthorizer:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub apigw-authorizer-basic-auth-${Environment}
+      CodeUri: auth_lambda/
+      Handler: auth.lambdaHandler
+      Runtime: nodejs12.x
+      Timeout: 5
+      Environment:
+        Variables:
+          DEBUG: !Ref DebugParam
+          BASIC_AUTH_USERNAME_PARAM_KEY: !Ref BasicAuthUsernameSSMParameterPath
+          BASIC_AUTH_PASSWORD_PARAM_KEY: !Ref BasicAuthPasswordSSMParameterPath
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Sid: AWSssmParameterStore
+              Effect: Allow
+              Action:
+              - ssm:GetParameter
+              Resource:
+              - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/config/zendesk-translation/*"
+            - Sid: KmsDecryptZendesKey
+              Effect: "Allow"
+              Action:
+              - kms:Decrypt
+              Resource:
+              - !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${KmsKeyId}"
+
+  ZendeskTrans:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub zendesk-trans-${Environment}
+      CodeUri: lambda/
+      Handler: app.lambdaHandler
+      Runtime: nodejs12.x
+      Timeout: 10
+      Environment:
+        Variables:
+          DEBUG: !Ref DebugParam
+          ZENDESK_ACCESS_TOKEN_PARAM_KEY: !Ref ZendeskKeySSMParameterPath
+          ZENDESK_SUBDOMAIN: !Ref ZendeskSubdomain
+          ZENDESK_EMAIL: !Ref ZendeskUsernameMail
+          ZENDESK_TICKET_LANG_FIELD_ID: !Ref ZendeskTicketLangFieldId
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Sid: AWStranslate
+              Effect: Allow
+              Action:
+              - comprehend:DetectDominantLanguage
+              - translate:TranslateText
+              Resource: '*'
+            - Sid: AWSssmParameterStore
+              Effect: Allow
+              Action:
+              - ssm:GetParameter
+              Resource:
+              - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/config/zendesk-translation/*"
+            - Sid: KmsDecryptZendesKey
+              Effect: "Allow"
+              Action:
+              - kms:Decrypt
+              Resource:
+              - !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${KmsKeyId}"
+      Events:
+        IntNote:
+          Type: EventBridgeRule
+          Properties:
+            EventBusName: !GetAtt EventBus.Name
+            Pattern: {"detail-type":["Support Ticket: Comment Created"],"detail":{"ticket_event":{"type":["Comment Created"],"comment":{"body":{"prefix":["#translate"]},"is_public":["false"],"author":{"is_staff":["true"]}},"ticket":{"via":{"channel":["email","web"]}}}}}
+
+        PubNote:
+          Type: EventBridgeRule
+          Properties:
+            EventBusName: !GetAtt EventBus.Name
+            Pattern: {"detail-type":["Support Ticket: Comment Created"],"detail":{"ticket_event":{"type":["Comment Created"],"comment":{"is_public":["true"],"author":{"is_staff":["false"]}},"ticket":{"via":{"channel":["email","web"]}}}}}
+
+
+  ZendeskTranslatorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/zendesk-trans-${Environment}
+      RetentionInDays: 7
+
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  ZendeskTrans:
+    Description: "Zendesk Translator lambda ARN"
+    Value: !GetAtt ZendeskTrans.Arn
+
+  ApiGwBasicAuthAuthorizer:
+    Description: "Basic Authorizer lambda ARN"
+    Value: !GetAtt ApiGwBasicAuthAuthorizer.Arn
+
+  ApiUrl:
+    Description: API url to point the zendesk webhook to 
+    Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/api/zendesk-eb

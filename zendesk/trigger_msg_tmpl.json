@@ -1,0 +1,24 @@
+{
+    "ticket_event": {
+        "type": "Comment Created",
+        "ticket": {
+            "id": "{{ticket.id}}",
+            "via": {
+                "channel":"{% if ticket.via == 'Web Form' %}web{% endif %}{% if ticket.via == 'Mail' %}email{% endif %}{% if ticket.via != 'Web Form' and ticket.via != 'Mail' %}{{ticket.via}}{% endif %}"
+            }
+        },
+        "comment": {
+            "id": "{{ticket.latest_comment.id}}",
+            "author": {
+                "id": "{{ticket.latest_comment.author.id}}",
+                "role": "{{ticket.latest_comment.author.role}}",
+                "is_staff": "{% if ticket.latest_comment.author.role == 'End-user' %}false{% else %}true{% endif %}"
+            },
+            "body": {
+                "prefix": "{{ticket.latest_comment.value | truncate: 10, '' }}",
+                "value": "{{ticket.latest_comment.value}}"
+            },
+            "is_public": "{{ticket.latest_comment.is_public}}"
+        }
+    }
+}
