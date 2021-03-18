@@ -1,0 +1,11 @@
+{
+  "name": "auth_lambda",
+  "version": "1.0.0",
+  "description": "Adding basic auth to api gateway as a custom authorizer",
+  "main": "auth.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Daniel Wellington",
+  "license": "ISC"
+}
