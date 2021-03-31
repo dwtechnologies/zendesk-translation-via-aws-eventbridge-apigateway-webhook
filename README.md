@@ -9,7 +9,7 @@ What is the difference between this project and the other ones out there includi
   * The agent/staff reply that should be translated is posted as a internal note started with #translate <text to be translated>. The update to the customer should be the same as agent/staff and not the API user.
   * If an attachment is also part of the internal note (eg return instructions) it will be part of the public reply response. <br /> <br />
  
- What is the difference between this solution and your other repo (<a href="https://github.com/dwtechnologies/zendesk-translation-via-aws-eventbridge-partner">zendesk-translation-via-aws-eventbridge-partner</a>)? This fork does not use the zendesk partner integration that requiers a subscription package from zendesk. Read more about this for details [here](Why-not-using-eventbridge-partner-setup?) <br /> <br />
+ What is the difference between this solution and your other repo (<a href="https://github.com/dwtechnologies/zendesk-translation-via-aws-eventbridge-partner">zendesk-translation-via-aws-eventbridge-partner</a>)? This fork does not use the zendesk partner integration that requiers a subscription package from zendesk. Read more about this for details [here](#Why-not-using-eventbridge-partner-setup?) <br /> <br />
  
 With the solution we build, we managed to save 99.97% in running cost (OPEX), we also saved agent time (~45s per ticket update) because the translation was  automated. The old solution requierd the agents to request translation both for incoming and outgoing updates, while this solution already have the translation ready before the agents enters the case and also updates the ticket after translation is done. <br />
  
