@@ -9,7 +9,7 @@ What is the difference between this project and the other ones out there includi
   * The agent/staff reply that should be translated is posted as a internal note started with #translate <text to be translated>. The update to the customer should be the same as agent/staff and not the API user.
   * If an attachment is also part of the internal note (eg return instructions) it will be part of the public reply response. <br /> <br />
  
- What is the difference between this solution and your other repo (<a href="https://github.com/dwtechnologies/zendesk-translation-via-aws-eventbridge-partner">zendesk-translation-via-aws-eventbridge-partner</a>)? This fork does not use the zendesk partner integration that requiers a subscription package from zendesk.<br /> <br />
+ What is the difference between this solution and your other repo (<a href="https://github.com/dwtechnologies/zendesk-translation-via-aws-eventbridge-partner">zendesk-translation-via-aws-eventbridge-partner</a>)? This fork does not use the zendesk partner integration that requiers a subscription package from zendesk. Read more about this for details [here](Why-not-using-eventbridge-partner-setup?) <br /> <br />
  
 With the solution we build, we managed to save 99.97% in running cost (OPEX), we also saved agent time (~45s per ticket update) because the translation was  automated. The old solution requierd the agents to request translation both for incoming and outgoing updates, while this solution already have the translation ready before the agents enters the case and also updates the ticket after translation is done. <br />
  
@@ -50,14 +50,6 @@ The following needs to be on your machine to be able to deploy
 * cat
 * sam
 * aws-cli
-
-#### Soft requierments
-If you don't find the settings for eventbridge on zendesk side for steps bellow, it means you don't have the "api package" (they basically bill you for not needing to setup webhooks). We got our setup deleted (we participated in the beta) in production from no where by zendesk when they informed us after we escalated the support ticket to our account manager.
-<br />
-We started to build
-for that function without informing us. On the good side of that, we have built a alternative solution that is based on the zendesk webhooks and api gateway + lambda for basic auth.
-<br /> 
-We moved instead to the alternative solution due to that after 6-7 months and its based on the similar stack with eventbridge but instead of using the partner integration, we utilized the zendesk webhook that is free and ingest it with the same format to api gateway with a lambda authorizer to get basic authentication protection. The API gateway will after a successful authorization put's the messages to eventbridge. The fork will come soon and will be found [here](https://github.com/dwtechnologies/zendesk-translation-via-aws-eventbridge-apigateway-webhook) but right now its private until we fixed the code and documentation.
 
 ### Setup a custom field in zendesk
 https://support.zendesk.com/hc/en-us/articles/203661496-Adding-custom-fields-to-your-tickets-and-support-request-form
@@ -124,6 +116,10 @@ Any contributions you make are **greatly appreciated** but please have in mind t
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+## Why not using eventbridge partner setup?
+You need the "api package" subscription from zendesk, they basically bill you for not needing to setup webhooks. Is it a price question? No, we got our setup deleted (we participated in the beta) in production from no where by zendesk. After we escalated the support ticket to our account manager we got informed that this is a subscription based feature, we also thought that the attitude was not right and we did not get any info about this before or during the beta.<br />
+Even if we were happy with the partner setup that was running for 6-7 months we started to build this setup instead as of the experience above.
 
 ### Todo
 Remove the custom apigateway and lambda authorizer and use the new feature for <a href="https://aws.amazon.com/blogs/compute/using-api-destinations-with-amazon-eventbridge/">outgoing and incoming webhooks form eventbridge</a>
