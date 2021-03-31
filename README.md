@@ -46,7 +46,6 @@ We could also ignore the OPEX cost for the this solution, you may ask your self 
 ### Prerequisites
 #### Technical requierments
 The following needs to be on your machine to be able to deploy
-* make
 * git
 * cat
 * sam
@@ -101,7 +100,13 @@ ZendeskKeySSMParameterPath=/config/zendesk-translation/zendesk_api_key
 ```
 4. Deploy
 ```sh
-make 
+sam build
+sam depoy
+
+#Example if you have multiple accounts with a aws cli dev and prod profile
+sam deploy --profile dev --config-env default
+sam deploy --profile prod --config-env production
+
 ```
 ### Setup zendesk outgoing webhooks
 This needs to be done after the deployment have been done, take a note on the basic auth user and password and the ApiUrl output from the deployment (sam output or cloudformation console). Follow this guide to setup the <a href="https://github.com/dwtechnologies/zendesk-translation-via-aws-eventbridge-apigateway-webhook/blob/main/WEBHOOK_CONF_GUIDE.md">outgoing zendesk configuration</a>.
