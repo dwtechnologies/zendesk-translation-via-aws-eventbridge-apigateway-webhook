@@ -9,7 +9,7 @@ What is the difference between this project and the other ones out there includi
   * The agent/staff reply that should be translated is posted as a internal note started with #translate <text to be translated>. The update to the customer should be the same as agent/staff and not the API user.
   * If an attachment is also part of the internal note (eg return instructions) it will be part of the public reply response. <br /> <br />
  
- What is the difference between this solution and your other repo (<a href="https://github.com/dwtechnologies/zendesk-translation-via-aws-eventbridge-partner">zendesk-translation-via-aws-eventbridge-partner</a>)? This fork does not use the zendesk partner integration that requiers a subscription package from zendesk. Read more about this for details [here](#Why-not-using-eventbridge-partner-setup) <br /> <br />
+ What is the difference between this solution and your other repo (<a href="https://github.com/dwtechnologies/zendesk-translation-via-aws-eventbridge-partner">zendesk-translation-via-aws-eventbridge-partner</a>)? This fork does not use the zendesk partner integration that requiers a subscription package from zendesk, instead we are using zendesk webhooks and pushing the information to eventbridge via apigateway with basic auth protection (only supported solution for zendesk). Read more about this for details [here.](#why-not-using-eventbridge-partner-setup) <br /> <br />
  
 With the solution we build, we managed to save 99.97% in running cost (OPEX), we also saved agent time (~45s per ticket update) because the translation was  automated. The old solution requierd the agents to request translation both for incoming and outgoing updates, while this solution already have the translation ready before the agents enters the case and also updates the ticket after translation is done. <br />
  
@@ -117,8 +117,8 @@ Any contributions you make are **greatly appreciated** but please have in mind t
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## Why not using eventbridge partner setup?
-You need the "api package" subscription from zendesk, they basically bill you for not needing to setup webhooks. Is it a price question? No, we got our setup deleted (we participated in the beta) in production from no where by zendesk. After we escalated the support ticket to our account manager we got informed that this is a subscription based feature, we also thought that the attitude was not right and we did not get any info about this before or during the beta.<br />
+## Why not using eventbridge partner setup
+You need the "api package" subscription from zendesk, they basically bill you for not needing to setup webhooks. Is it a price question? No, we got our setup deleted (we participated in the beta) in production from no where by zendesk. After we escalated the support ticket to our account manager we got informed that this is a subscription based feature, we also thought that the attitude was not right as we did not get any info about this before or during the beta.<br />
 Even if we were happy with the partner setup that was running for 6-7 months we started to build this setup instead as of the experience above.
 
 ### Todo
