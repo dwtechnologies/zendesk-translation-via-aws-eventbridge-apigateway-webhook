@@ -122,7 +122,7 @@ You need the "api package" subscription from zendesk, they basically bill you fo
 Even if we were happy with the partner setup that was running for 6-7 months we started to build this setup instead as of the experience above.
 
 ### Todo
-Remove the custom apigateway and lambda authorizer and use the new feature for <a href="https://aws.amazon.com/blogs/compute/using-api-destinations-with-amazon-eventbridge/">outgoing webhooks from eventbridge</a>
+Remove some code and use the new feature for <a href="https://aws.amazon.com/blogs/compute/using-api-destinations-with-amazon-eventbridge/">outgoing webhooks from eventbridge</a>
 
 ## License
 Distributed under the GPL-3.0 License. See `LICENSE` for more information.
